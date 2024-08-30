@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, Normalize
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import error_matrix
 import seaborn as sns
 
 # Input directories for HR and LR rasters
@@ -106,18 +106,18 @@ def apply_class_mapping_lr_to_hr(lr_image, class_mapping):
             mapped_image[lr_image == lr_class] = hr_class_value
     return mapped_image
 
-# Function to compute confusion matrix
-def compute_confusion_matrix(hr_image, lr_image, class_names):
+# Function to compute error matrix
+def compute_error_matrix(hr_image, lr_image, class_names):
     # Flatten the arrays to compare pixel by pixel
     hr_flat = hr_image.flatten()
     lr_flat = lr_image.flatten()
     
-    # Compute confusion matrix
-    cm = confusion_matrix(hr_flat, lr_flat, labels=range(1, len(class_names) + 1))
-    return cm
+    # Compute error matrix
+    em = error_matrix(hr_flat, lr_flat, labels=range(1, len(class_names) + 1))
+    return em
 
-# Function to` plot confusion matrix
-def plot_confusion_matrix(cm, class_names, output_path):
+# Function to` plot error matrix
+def plot_error_matrix(em, class_names, output_path):
     plt.figure(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
     plt.xlabel('Predicted Class (LR)')
@@ -219,12 +219,12 @@ def process_rasters(hr_path, lr_path, processed_path, agreement_path, report_pat
     with rasterio.open(processed_path, 'w', **hr_meta) as dst:
         dst.write(mapped_lr_data.astype(rasterio.uint8), 1)
 
-    # Compute confusion matrix
-    cm = compute_confusion_matrix(hr_reprojected, mapped_lr_data, class_names)
+    # Compute error matrix
+    cm = compute_error_matrix(hr_reprojected, mapped_lr_data, class_names)
 
     # Plot and save the confusion matrix
-    confusion_matrix_path = os.path.join(output_report_dir, f'{os.path.basename(lr_path).replace(".tif", "")}_confusion_matrix.png')
-    plot_confusion_matrix(cm, class_names, confusion_matrix_path)
+    error_matrix_path = os.path.join(output_report_dir, f'{os.path.basename(lr_path).replace(".tif", "")}_confusion_matrix.png')
+    plot_confusion_matrix(em, class_names, confusion_matrix_path)
 
     # Generate and save the agreement-disagreement map and write statistics to Excel
     generate_agreement_disagreement_map(hr_reprojected, mapped_lr_data, agreement_path, hr_meta, report_path)
